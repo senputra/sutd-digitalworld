@@ -3,8 +3,8 @@ from time import sleep
 from libdw import pyrebase
 
 
-url = ''  # URL to Firebase database
-apikey = ''  # unique token used for authentication
+url = 'https://thymio-week-4.firebaseio.com/'  # URL to Firebase database
+apikey = 'AIzaSyC2dv-BGYMKYgS5K7laqnH7lDzJrJGUl3U'  # unique token used for authentication
 
 config = {
     "apiKey": apikey,
