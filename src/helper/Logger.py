@@ -1,16 +1,14 @@
-class Logger(object):
-
-    """
-    Logger is a class that helps you print your messages during coding and 
+"""
+    Logger is a class that helps you print your messages during coding and
     block all the message altogether for production.
 
     Logger allows user to show messages with regards to its importance.
 
     The verbosity of the logger is default to 3. It can be changed from
-    0 to 4 (no logging to full logging). 
+    0 to 4 (no logging to full logging).
 
 
-    USE CASE 
+    USE CASE
 
         logger1 = Logger()
         logger1.log("Hello this is verbosity level 3")
@@ -34,6 +32,8 @@ class Logger(object):
     3 = debug spam message
     """
 
+
+class Logger(object):
     _verbosity = 3
 
     @property
@@ -48,6 +48,9 @@ class Logger(object):
             type(self)._verbosity = 0
         else:
             type(self)._verbosity = level
+
+        self.warn("LOGGER: Verbosity is changed to level {}".format(
+            type(self)._verbosity))
 
     @verbosity.getter
     def verbosity(self):
@@ -69,11 +72,12 @@ class Logger(object):
         return
 
 
-logger1 = Logger()
-logger2 = Logger()
-logger1.log("Hello this is verbosity level 3")
-logger1.verbosity = 2
-logger1.log("Hello this is verbosity level 2")
-logger1.warn("Hello this is verbosity level 2 from warning")
+# if __name__ == "__main__":
+#     logger1 = Logger()
+#     logger2 = Logger()
+#     logger1.log("Hello this is verbosity level 3")
+#     logger1.verbosity = 2
+#     logger1.log("Hello this is verbosity level 2")
+#     logger1.warn("Hello this is verbosity level 2 from warning")
 
-print(logger2.verbosity)
+#     print(logger2.verbosity)

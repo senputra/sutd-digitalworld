@@ -1,55 +1,93 @@
-from core import Reducer, Action
-from core.helper import Logger
+from core.Action import Action
+from helper import Logger, Database
+from datetime import datetime
+
+
+class Reducer:
+
+    _logger = Logger.Logger()
+    _database = Database.Database()
+
+    def useMachine(self, state: dict, action: Action) -> dict:
+        patch = {
+            "availability": False,
+            # Get the time now
+            "lastUsed":  (datetime.now() - datetime(1970, 1, 1)).total_seconds(),
+        }
+
+        # 1.call firebase function to update the state of the machine
+        type(self)._database.create(action.payload["machineId"], patch)
+        # finally, update machine state
+
+        state.update({
+            action.payload["machineId"]: patch
+        })
+        return state
+
+    def updateTelegram(self, state: dict, action: Action) -> dict:
+        return state
+
+    def errorReducer(self, state: dict, action: Action) -> dict:
+        self._logger.error(
+            "unrecognized action -> action: {} || payload: {}".format(action.action, action.payload))
+        return state
+
+    def reduce(self, state: dict, action: Action) -> dict:
+        return {
+            "USE_MACHINE": lambda state, action: self.useMachine(state, action),
+            "UPDATE_TELEGRAM": lambda state, action: self.updateTelegram(state, action),
+        }.get(action.action, self.errorReducer)(state, action)
 
 
 class Store:
 
-    class StoreTYPE:
-        WASHING_MACHINE = "washing_machine"
-        DRYING_MACHINE = "drying_machine"
+    def __init__(self):
+        self._logger = Logger.Logger()
+        self._reducer = Reducer()
 
-    """ Store class to implement redux in python """
+        self.state = {}
+        ''' state stores the state of the machine immutably
+        INITIAL STATE V1.0
 
-    # _reducer: Reducer
-    # _state: dict
+            iotID : "BLK_59_Laundry" or "BLK_55_PANTRY"
+            machines : {
+                "BLK_59_WASHING_MASHINE_1": {
+                    availability: True,
+                    lastUsed: 190123910239123 #time, seconds from 1 Jan 1970
+                }
+            }
+            machineIDs : [
+                "BLK_59_WASHING_MASHINE_1",
+                "BLK_59_WASHING_MASHINE_1",
+            ]
 
-    _cache: dict = {
-        "washing_machine": {},
-        "drying_machine": {},
-    }
+        '''
 
-    def __init__(self, verbose=False) -> None:
-        super().__init__()
+    def _convert(self, action: Action):
+        state = self._reducer.reduce(self.state, action)
+        self._logger.log("[STATE]")
+        self._logger.log("{")
+        [self._logger.log("    {}: {},".format(key, value))
+         for key, value in self.state.items()]
+        self._logger.log("}")
 
-        self._verbsoe = verbose
-        self._callbacks = []
+    def dispatch(self, action: Action):
+        self._convert(action)
+        self._logger.log("[ACTION] {}".format(action.action))
 
-    def upsert(self, feature: str, id: str, value) -> None:
-        if (feature not in _cache.keys()):
-            _log("ERROR: feature not found")
-            return
-        self._cache[feature][id] = value
 
-        # Notifies listeners on changes in values
-        self.notify()
-        return
+if __name__ == "__main__":
 
-    def addListener(self, callbackFn):
-        return self._callbacks.append(callbackFn)
+    store = Store()
 
-    def removeListener(self, callbackFn):
-        return self._callbacks.remove(callbackFn)
+    a = Action("lmao", {
+        "ids": 1
+    })
+    b = Action("USE_MACHINE", {
+        "machineId": "BLK_59_Laundry",
+    })
 
-    def notify(self):
-        for callback in self._callbacks:
-            callback()
-        return
+    store.dispatch(a)
+    store.dispatch(b)
 
-    # def dispatch(self, action: Action) -> None:
-    #     self._reducer.convertActionToState(self._state, action)
-    #     _log(action.getName())
-    #     return
-
-    def _log(self, message) -> None:
-        if self._verbose is True:
-            Logger.logToConsole("[STORE] " + message)
+    d = {}

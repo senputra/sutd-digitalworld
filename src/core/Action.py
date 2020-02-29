@@ -1,21 +1,15 @@
-from abc import abstractmethod
-
-
 class Action:
-    """ base Action class
+    def __init__(self, action: str, payload: dict):
+        self.action = action
+        self.payload = payload
+        pass
 
-    This is an interface that needs implementation
 
-    :param _name: A string, Action name
-    :param _action: A string, type of action
-    :param _payload: An object, Action payload; can be None
+class UseMachineAction(Action):
 
-    """
-
-    @abstractmethod
-    def getPayload(self):
-        return
-
-    @abstractmethod
-    def getName(self):
-        return
+    def __init__(self, machineId: str):
+        self.action = "USE_MACHINE"
+        self.payload = {
+            "machineId": machineId,
+        }
+        pass
