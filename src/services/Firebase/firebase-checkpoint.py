@@ -7,14 +7,15 @@ from datetime import timedelta
 #other type of timestamp is firestore.SERVER_TIMESTAMP
 
 cred = credentials.Certificate("serviceAccountKey.json")
-# firebase_admin.initialize_app(cred)
 
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://dw-bk-1d.firebaseio.com'
+})
 
 #-------------------------------------------------------------------------------------------------------------
 ##CLOUD
-db = firestore.client()
 
-mach_ref = db.collection('machine')
+mach_ref = firestore.client().collection('machine')
 blk59_washer_1_ref = mach_ref.document('blk59_washer_1')
 
 starttime = datetime.now()
@@ -28,7 +29,7 @@ blk59_washer_1_datalog_no_ref = blk59_washer_1_datalog_ref.document('1')
 blk59_washer_1_datalog_no_ref.set(time_data)
 
 
-
+'''
 mach_ref.document('blk59_washer_1').set({
         'Availability': True
         }).then(function() {
@@ -46,7 +47,7 @@ mach_ref.document('blk59_washer_1').set({
   .catch(function(error){
     console.log("Error adding document to Firestore: " + error);
   });
-
+'''
 
 #UPDATE
 
@@ -85,7 +86,7 @@ def update_datalog(blocknumber,machine_type,ID):
 
 def finished_cycle(timenow):
     ## how do i do this -.-
-    
+    pass
 
     
 #RETRIEVE
@@ -109,7 +110,8 @@ def get_available_mach(blocknumber, machine_type):
 
 #-----------------------------------------------------------------------------------------------------------------------
 ##REALTIME
-ref = db.reference(...)
+
+ref = db.reference()
 
 mach_ref = ref.child('machine')
 
@@ -164,7 +166,7 @@ def update_datalog(blocknumber,machine_type,ID):
 
 def finished_cycle(timenow):
     ## how do i do this -.-
-    
+    pass
 
     
 #RETRIEVE
