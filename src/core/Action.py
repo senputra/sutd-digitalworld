@@ -13,3 +13,12 @@ class UseMachineAction(Action):
             "machineId": machineId,
         }
         pass
+
+class CancelMachineAction(Action):
+
+    def __init__(self, machineId: str):
+        self.action = "CANCEL_MACHINE"
+        self.payload = {
+            "machineId": machineId,
+        }
+        pass

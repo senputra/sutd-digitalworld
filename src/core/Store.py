@@ -4,25 +4,34 @@ from datetime import datetime
 
 
 class Reducer:
-
-    _logger = Logger.Logger()
-    _database = Database.Database()
+    def __init__(self):
+        self._logger = Logger.Logger()
+        self._database = Database.Database()
 
     def useMachine(self, state: dict, action: Action) -> dict:
+        """ Called when user wants to use a machine
+        1. Changed the state of the machine form unoccupied to occupied
+        2. Push a log to firebase
+        """
         patch = {
             "availability": False,
             # Get the time now
             "lastUsed":  (datetime.now() - datetime(1970, 1, 1)).total_seconds(),
         }
 
-        # 1.call firebase function to update the state of the machine
-        type(self)._database.create(action.payload["machineId"], patch)
-        # finally, update machine state
+        self._database.create(action.payload["machineId"], patch)
 
         state.update({
             action.payload["machineId"]: patch
         })
         return state
+
+    def cancelMachine(self, state: dict, action: Action) -> dict:
+        """ Called when user wants to undo the machine he/she pressed
+        1. Change the state form occupied to unoccupied
+        2. Remove the log from firestore
+        3. Remove any reminder assigned to any telegram user
+        """
 
     def updateTelegram(self, state: dict, action: Action) -> dict:
         return state
@@ -35,12 +44,12 @@ class Reducer:
     def reduce(self, state: dict, action: Action) -> dict:
         return {
             "USE_MACHINE": lambda state, action: self.useMachine(state, action),
+            "CANCEL_MACHINE": lambda state, action: self.cancelMachine(state, action),
             "UPDATE_TELEGRAM": lambda state, action: self.updateTelegram(state, action),
         }.get(action.action, self.errorReducer)(state, action)
 
 
 class Store:
-
     def __init__(self):
         self._logger = Logger.Logger()
         self._reducer = Reducer()
