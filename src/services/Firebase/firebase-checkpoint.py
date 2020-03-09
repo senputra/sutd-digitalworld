@@ -18,8 +18,8 @@ cred = credentials.Certificate("serviceAccountKey.json")
 # mach_ref = firestore.client().collection('machine')
 # blk59_washer_1_ref = mach_ref.document('blk59_washer_1')
 
-# starttime = datetime.now()
-# endtime = starttime + timedelta(seconds = 40*60)
+# starttime = datetime.now().timestamp()
+# endtime = starttime + 2400
 # time_data = {'start_time': starttime , 'end_time': endtime}
 # blk59_washer_1_ref.set({
 #         'Availability': True
@@ -40,19 +40,20 @@ def update_availability_used(blocknumber,machine_type,ID): #blocknumber has to b
             if machine_type.lower() == doc_id_lst[1]:
                 if int(ID) == int(doc_id_lst[2]):
                     mach_ref.document(docid).update({
-                        'Availability': False
+                        'Availability': 'False'
                     })
                     
 update_availability_used('blk59', 'washer', 1)
             
 
 def update_datalog(blocknumber,machine_type,ID):
-    starttime = datetime.now()
+    time = datetime.now().timestamp()
+    time_str = str(time)
+    starttime = datetime.now().timestamp()
     if machine_type.lower() == 'washer':
-        endtime = starttime + timedelta(seconds = 40*60)
-        print(endtime)
+        endtime = starttime + 2400
     elif machine_type.lower() == 'dryer':
-        endtime = starttime + timedelta(seconds = 30*60)
+        endtime = starttime + 1800
     data = {'start_time': starttime, 'end_time': endtime}
     
     docs = mach_ref.stream()
@@ -62,7 +63,7 @@ def update_datalog(blocknumber,machine_type,ID):
         if blocknumber == doc_id_lst[0]:
             if machine_type.lower() == doc_id_lst[1]:
                 if int(ID) == int(doc_id_lst[2]):
-                    mach_ref.document(docid).collection('data_log').add(data) #add a document with data to 'data_log' collection (random id allocation)
+                    mach_ref.document(docid).collection('data_log').document(time_str).set(data) #add a document with data to 'data_log' collection (random id allocation)
 
 update_datalog('blk59', 'washer', 1)
 
@@ -72,19 +73,19 @@ def finished_cycle(timenow):
     docs = mach_ref.stream()
     for doc in docs:
         docid = doc.id
-        query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now()).stream()
+        query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now().timestamp).stream()
         for data in query:
             mach_ref.document(docid).update({
-                'Availability': True
+                'Availability': 'True'
             })
 
 finished_cycle('i')       
-    
+
     
 #RETRIEVE
     
 def get_available_mach(blocknumber, machine_type):
-    docs = mach_ref.where('Availability', '==', True).stream()
+    docs = mach_ref.where('Availability', '==', 'True').stream()
     avail_mach = []
     for doc in docs: 
         docid = doc.id
@@ -113,7 +114,7 @@ mach_ref = ref.child('machine')
 
 blk59_washer_1_ref = mach_ref.child('blk59_washer_1')
 blk59_washer_1_datalog_ref = blk59_washer_1_ref.child('data_log')
-blk59_washer_1_datalog_no_ref = blk59_washer_1_datalog_ref.child('1')  ##doesnt add collection to document --- also couldnt add document to collection??
+blk59_washer_1_datalog_no_ref = blk59_washer_1_datalog_ref.child('1')
 starttime = datetime.now()
 endtime = starttime + timedelta(seconds = 40*60)
 blk59_washer_1_datalog_no_ref.set = ({
