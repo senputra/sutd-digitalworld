@@ -73,7 +73,7 @@ def finished_cycle(timenow):
     docs = mach_ref.stream()
     for doc in docs:
         docid = doc.id
-        query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now().timestamp).stream()
+        query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now().timestamp()).stream()
         for data in query:
             mach_ref.document(docid).update({
                 'Availability': 'True'

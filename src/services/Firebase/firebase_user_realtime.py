@@ -12,9 +12,9 @@ cred = credentials.Certificate("serviceAccountKey.json")
 #     'databaseURL': 'https://dw-bk-1d.firebaseio.com'
 # })
 
-# ref = db.reference()
+ref = db.reference()
 
-# mach_ref = ref.child('machine')
+mach_ref = ref.child('Machine')
 
 # blk59_washer_1_ref = mach_ref.child('blk59_washer_1')
 
@@ -37,27 +37,23 @@ cred = credentials.Certificate("serviceAccountKey.json")
 #UPDATE
 
 def update_availability_used(blocknumber,machine_type,ID): #blocknumber has to be in 'blk--'' format
-    machines = machines.keys()
-    for doc in docs:
-        docid = doc.id
-        doc_id_lst = docid.split('_')
-        if blocknumber == doc_id_lst[0]:
-            if machine_type.lower() == doc_id_lst[1]:
-                if int(ID) == int(doc_id_lst[2]):
-                    mach_ref.document(docid).update({
+    machines = mach_ref.keys()
+    machines = list(machines)
+    for mac_ID in machines:
+        machine_details = mac_ID.split('_')
+        if blocknumber == machine_details[0]:
+            if machine_type.lower() == machine_details[1]:
+                if int(ID) == int(machine_details[2]):
+                    mach_ref.child(mac_ID).update({
                         'Availability': 'False'
                     })
 
                     
-test_dict = { "geeks" : 7, "for" : 1, "geeks" : 2 } 
-lst = list(test_dict.keys())
-# accessing 2nd element using keys() 
-print (lst[1])
             
 
 def update_datalog(blocknumber,machine_type,ID):
     time = datetime.now().timestamp()
-    time_str = str(time)
+    time_str = str(int(time))
     starttime = datetime.now().timestamp()
     if machine_type.lower() == 'washer':
         endtime = starttime + 2400
@@ -65,42 +61,47 @@ def update_datalog(blocknumber,machine_type,ID):
         endtime = starttime + 1800
     data = {'start_time': starttime, 'end_time': endtime}
     
-    docs = mach_ref.stream()
-    for doc in docs:
-        docid = doc.id
-        doc_id_lst = docid.split('_')
-        if blocknumber == doc_id_lst[0]:
-            if machine_type.lower() == doc_id_lst[1]:
-                if int(ID) == int(doc_id_lst[2]):
-                    mach_ref.document(docid).collection('data_log').document(time_str).set(data) #add a document with data to 'data_log' collection (random id allocation)
+    machines = mach_ref.order_by_key().get()
+    machines = list(machines)
+    for mac_ID in machines:
+        machine_details = mac_ID.split('_')
+        if blocknumber == machine_details[0]:
+            if machine_type == machine_details[1]:
+                if ID == machine_details[2]:
+                    mach_ref.child(mac_ID).child("datalog").child(time_str).set(data) #add a document with data to 'data_log' collection (random id allocation)
 
+update_datalog('Block55', 'Washer', '01')                    
                     
-                    
-def finished_cycle(timenow):
-    docs = mach_ref.stream()
-    for doc in docs:
-        docid = doc.id
-        query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now().timestamp).stream()
-        for data in query:
-            mach_ref.document(docid).update({
-                'Availability': 'True'
-            })
+# def finished_cycle(timenow):
+#     machines = machines.keys()
+#     machines = list(machines)
+#     for mac_ID in machines:
+#         machine_details = mac_ID.split('_')
+#         query = mach_ref.document(docid).collection('data_log').where('end_time', '==', datetime.now().timestamp).stream()
+#         for data in query:
+#             mach_ref.child(mac_ID).update({
+#                 'Availability': 'True'
+#             })
     
     
 #RETRIEVE
     
 def get_available_mach(blocknumber, machine_type):
-    docs = mach_ref.where('Availability', '==', 'True').stream()
     avail_mach = []
-    for doc in docs: 
-        docid = doc.id
-        print(mach_ref.document(docid).get())
-        doc_id_lst = docid.split('_')
-        if blocknumber == doc_id_lst[0]:
-            if machine_type.lower() == doc_id_lst[1]:
-                avail_mach.append(doc_id_lst[2])
+    machines = mach_ref.order_by_key().get()
+    machines = list(machines) 
+    for mac_ID in machines: 
+        availability = mach_ref.child(mac_ID).order_by_child('availability').get().items()
+        key, val = availability
+        if key[1] == True:
+            machine_details = mac_ID.split('_')
+            avail_mach.append(machine_details[2])
                 
     if avail_mach == []:
         return 'None'
     else:
         return avail_mach
+    
+get_available_mach('Block55', 'Washer')
+    
+    
