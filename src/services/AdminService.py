@@ -3,7 +3,6 @@ import time
 import numpy as np
 from firebase_admin import credentials
 from firebase_admin import db
-from helper import Logger
 
 '''
 structure:
@@ -13,14 +12,17 @@ structure:
                 datalog: dictionary = {'start_timestamp': , 'end_timestamp'}     
                     
 '''
-class AdminService:
+
+class Booking:
     __root = None
-    _logger = None
     def __init__(self):
-        self._logger = Logger.Logger()
         # Vectorizing all fucntions to perform action on multiple machines
-        self.manage_Machine = np.vectorize(self.__manage_Machine)
-        self.change_Availability = np.vectorize(self.__change_Availability)
+        #self.change_Availability = np.vectorize(self.__change_Availability)
+        self.add_machine = np.vectorize(self.__add_Machine, cache = True)
+        self.delete_machine = np.vectorize(self.__del_Machine, cache = True)
+        self.occupy_machine = np.vectorize(self.__occupy_machine, cache = True)
+        self.undo_occupy_machine = np.vectorize(self.__undo_occupy_machine, cache = True)
+        self.spoiled_machine = np.vectorize(self.__spoiled_machine, cache = True)
         # Establishing connection to firebase RT Database
         
         while type(self.__root) == type(None): #modify to use try catch instead
@@ -30,10 +32,9 @@ class AdminService:
                 'databaseURL': 'https://dw-bk-1d.firebaseio.com'
                 })
                 self.__root = db.reference().child("Machine")
-                self._logger.log("Firebase Credentials initialized")
-                # self._logger.log(type(self.__root))
+                print(type(self.__root))
             except:
-                self._logger.error("serviceAccountKey.json is not setup properly")
+                print("serviceAccountKey.json is not setup properly")
                 time.sleep(0.5)
                 
     # Splice a full ID into substrings: Location, Type and No_ID
@@ -71,51 +72,52 @@ class AdminService:
         return machines
             
     # Adding/removing a machine 
-    def __manage_Machine(self, edit: str, Location: str, Type: str, no_ID: str ): 
+    # Separate into add and delete functions
+    def __del_Machine(self,  Location: str, Type: str, no_ID: str ): 
         # Managing Queries: 
         existing_Machine = self.__getMachines()
         mac_ID = Location + "_"  + Type + "_" + no_ID
-        if edit == "del" and existing_Machine != None:
-            # Deleting all machines with specified Type and Location
-            if Location != "" and Type != "" and no_ID == "":
-                for machine in existing_Machine:
-                    if machine.find(Location) != -1 and machine.find(Type) != -1:
-                        self.__root.child(machine).delete()
-                        
-            # Deleting all machines in specified Location
-            elif Location != "" and Type == "" and no_ID == "":
-                for machine in existing_Machine:
-                    if machine.find(Location) != -1 :
-                        self.__root.child(machine).delete()
-            # Deleting all mmachines belong to specified Type    
-            elif Location == "" and Type != "" and no_ID == "":
-                for machine in existing_Machine:
-                    if machine.find(Type) != -1:
-                        self.__root.child(machine).delete()
-                        
-            # Deleting the machine with the specified full ID of Location_Type_ID 
-            elif mac_ID in existing_Machine:
-                self.__root.child(mac_ID).delete()
-                #if mac_ID not in existing_Machine:
-                #    self._logger("deleted: ", mac_ID) # for debugging only
-                
-        elif edit == "add":
-            if existing_Machine == None:
-                    self.__root.child(mac_ID).child("availability").set(False)
-                    self.__root.child(mac_ID).child("datalog").set("")
-            elif mac_ID not in existing_Machine and Location != "" and Type != "" and no_ID != "":
-                    self.__root.child(mac_ID).child("availability").set(False)
-                    self.__root.child(mac_ID).child("datalog").set("")
-        else:
-            raise Exception("Invalid action. manage_Machine can only 'del' or 'add' machines ")
 
-    # Change machine availability
-    def __change_Availability(self, Location: str, Type: str, no_ID: str , status: bool):
+        # Deleting all machines with specified Type and Location
+        if Location != "" and Type != "" and no_ID == "":
+            for machine in existing_Machine:
+                if machine.find(Location) != -1 and machine.find(Type) != -1:
+                    self.__root.child(machine).delete()
+
+        # Deleting all machines in specified Location
+        elif Location != "" and Type == "" and no_ID == "":
+            for machine in existing_Machine:
+                if machine.find(Location) != -1 :
+                    self.__root.child(machine).delete()
+        # Deleting all mmachines belong to specified Type    
+        elif Location == "" and Type != "" and no_ID == "":
+            for machine in existing_Machine:
+                if machine.find(Type) != -1:
+                    self.__root.child(machine).delete()
+
+        # Deleting the machine with the specified full ID of Location_Type_ID 
+        elif mac_ID in existing_Machine:
+            self.__root.child(mac_ID).delete()
+            #if mac_ID not in existing_Machine:
+            #    print("deleted: ", mac_ID) # for debugging only
+                
+        
+   
+    def __add_Machine(self, Location: str, Type: str, no_ID: str):
+        existing_Machine = self.__getMachines()
+        mac_ID = Location + "_"  + Type + "_" + no_ID
+        if existing_Machine == None:
+                self.__root.child(mac_ID).child("availability").set(False)
+                self.__root.child(mac_ID).child("datalog").set({"1": "a", "2": "b", "3":"c"})
+        elif mac_ID not in existing_Machine and Location != "" and Type != "" and no_ID != "":
+                self.__root.child(mac_ID).child("availability").set(False)
+                self.__root.child(mac_ID).child("datalog").set({"1": "a", "2": "b", "3":"c"})        
+    
+    #Change machine availability
+    def __change_Availability(self, Location: str, Type: str, no_ID: str , status: str):
         existing_Machine = self.__getMachines()
         mac_ID = Location + "_"  + Type + "_" + no_ID
 
-        if status != False and status != True:
-            raise Exception("Invalid value for machine availability")
         
         if existing_Machine != None:
 
@@ -123,25 +125,71 @@ class AdminService:
             if Location != "" and Type != "" and no_ID == "":
                 for machine in existing_Machine:
                     if machine.find(Location) != -1 and machine.find(Type) != -1:
-                        self.__root.child(machine).child("availability").set(bool(status))
+                        self.__root.child(machine).child("availability").set(str(status))
             
             # Change availability all machines with specified Location  
             elif Location != "" and Type == "" and no_ID == "":
                 for machine in existing_Machine:
                     if machine.find(Location) != -1 :
-                        self.__root.child(machine).child("availability").set(bool(status))
+                        self.__root.child(machine).child("availability").set(str(status))
             
             # Change availability all machines with specified Type
             elif Location == "" and Type != "" and no_ID == "":
                 for machine in existing_Machine:
                     if machine.find(Type) != -1:
-                        self.__root.child(machine).child("availability").set(bool(status))
+                        self.__root.child(machine).child("availability").set(str(status))
             
             # Change availability the machine with specified full ID of Location_Type_ID  
             elif mac_ID in existing_Machine:
-                self.__root.child(mac_ID).child("availability").set(bool(status))
+                self.__root.child(mac_ID).child("availability").set(str(status))
                 
             else:
                 raise Exception("Invalid ID. The specified machine ID does not exist")
         else:
             raise Exception("Fail to retrieve machines from firebase")
+    
+    # Clear latest datalog
+    def __clear_latest_datalog(self, Location: str, Type: str, no_ID: str):
+        #Search for the latest 
+        existing_Machine = self.__getMachines()
+        mac_ID = Location + "_"  + Type + "_" + no_ID
+        
+        if Location != "" and Type != "" and no_ID == "":
+            for machine in existing_Machine:
+                if machine.find(Location) != -1 and machine.find(Type) != -1:  
+                    latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
+                    print(latest_attempt)
+                    self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
+                    
+        elif Location != "" and Type == "" and no_ID == "":
+            for machine in existing_Machine:
+                if machine.find(Location) != -1 :
+                    latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
+                    print(latest_attempt)
+                    self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
+                    
+        elif Location == "" and Type != "" and no_ID == "":
+            for machine in existing_Machine:
+                print(machine)
+                if machine.find(Type) != -1:
+                    latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
+                    print(latest_attempt)
+                    self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
+        
+        elif mac_ID in existing_Machine:
+            latest_attempt = list(self.__root.child(mac_ID).child("datalog").order_by_key().limit_to_last(1).get().keys())
+            print(latest_attempt)
+            self.__root.child(mac_ID).child("datalog").child(latest_attempt[0]).delete()
+    
+    # Occupy the machine, set availability = "True"
+    def __occupy_machine(self, Location: str, Type: str, no_ID: str):
+        self.__change_Availability(Location, Type, no_ID , "True")
+    
+    # Unoccupy the machine, set availability = "False"
+    def __undo_occupy_machine(self, Location: str, Type: str, no_ID: str):
+        self.__clear_latest_datalog(Location, Type, no_ID)
+        self.__change_Availability(Location, Type, no_ID , "False")
+    
+    # Setting machines to spoiled state
+    def __spoiled_machine(self, Location: str, Type: str, no_ID: str):
+        self.__change_Availability(Location, Type, no_ID , "Spoiled")
