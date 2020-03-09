@@ -2,8 +2,6 @@ class Action:
     def __init__(self, action: str, payload: dict):
         self.action = action
         self.payload = payload
-        pass
-
 
 class UseMachineAction(Action):
 
@@ -12,7 +10,22 @@ class UseMachineAction(Action):
         self.payload = {
             "machineId": machineId,
         }
-        pass
+
+class AddMachineAction(Action):
+
+    def __init__(self, machineId: str):
+        self.action = "ADD_MACHINE"
+        self.payload = {
+            "machineId": machineId,
+        }
+
+class DelMachineAction(Action):
+
+    def __init__(self, machineId: str):
+        self.action = "DEL_MACHINE"
+        self.payload = {
+            "machineId": machineId,
+        }
 
 class CancelMachineAction(Action):
 
@@ -21,4 +34,3 @@ class CancelMachineAction(Action):
         self.payload = {
             "machineId": machineId,
         }
-        pass

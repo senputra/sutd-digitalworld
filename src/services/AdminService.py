@@ -108,7 +108,7 @@ class AdminService:
                     self.__root.child(mac_ID).child("datalog").set("")
         else:
             raise Exception("Invalid action. manage_Machine can only 'del' or 'add' machines ")
-    
+
     # Change machine availability
     def __change_Availability(self, Location: str, Type: str, no_ID: str , status: bool):
         existing_Machine = self.__getMachines()

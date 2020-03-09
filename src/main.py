@@ -27,8 +27,12 @@ if __name__ == "__main__":
             break
         elif action.find("CANCEL") != -1 and len(action.split()) == 2:
             _logger.log("cancel machine" + action.split()[1])
-            facade.cancelMachine("BLK_59_WASHING_" + action.split()[1])
+            facade.cancelMachine("BLK59_WASHING_" + action.split()[1])
+        elif action.find("ADD") != -1 and len(action.split()) == 2:
+            facade.addMachine("BLK59_WASHING_"+action.split()[1])
+        elif action.find("DEL") != -1 and len(action.split()) == 2:
+            facade.delMachine("BLK59_WASHING_"+action.split()[1])
         elif(action.isdigit()):
-            facade.useMachine("BLK_59_WASHING_"+action)
+            facade.useMachine("BLK59_WASHING_"+action)
 
 exit

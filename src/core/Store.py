@@ -33,6 +33,29 @@ class Reducer:
         3. Remove any reminder assigned to any telegram user
         """
 
+    def addMachine(self, state:dict, action:Action) -> dict:
+        """ [Admin] Add machine
+        1. Add machine to firebase
+        """
+        self._database.addMachine(action.payload["machineId"])
+        state.update({
+            action.payload["machineId"]:{
+                "availability" : True,
+                "lastUsed": 0,
+            }
+        })
+        return state
+
+    def delMachine(self, state:dict, action:Action) -> dict:
+        """ [Admin] Del machine
+        1. Del machine from firebase
+        """
+        self._database.delMachine(action.payload["machineId"])
+
+        r = state
+        del r[action.payload["machineId"]]
+        return r
+
     def updateTelegram(self, state: dict, action: Action) -> dict:
         return state
 
@@ -46,6 +69,8 @@ class Reducer:
             "USE_MACHINE": lambda state, action: self.useMachine(state, action),
             "CANCEL_MACHINE": lambda state, action: self.cancelMachine(state, action),
             "UPDATE_TELEGRAM": lambda state, action: self.updateTelegram(state, action),
+            "ADD_MACHINE": lambda state, action: self.addMachine(state, action),
+            "DEL_MACHINE": lambda state, action: self.delMachine(state, action),
         }.get(action.action, self.errorReducer)(state, action)
 
 

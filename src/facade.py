@@ -1,5 +1,5 @@
 from core import Store
-from core.Action import UseMachineAction, CancelMachineAction
+from core.Action import UseMachineAction, AddMachineAction, CancelMachineAction, DelMachineAction
 
 
 class Facade:
@@ -19,10 +19,15 @@ class Facade:
 
     def useMachine(self, machineId: str) -> None:
         self._dispatch(UseMachineAction(machineId))
-        return
 
     def cancelMachine(self, machineId: str) -> None:
         self._dispatch(CancelMachineAction(machineId))
+
+    def addMachine(self, machineId: str) -> None:
+        self._dispatch(AddMachineAction(machineId))
+
+    def delMachine(self, machineId: str) -> None:
+        self._dispatch(DelMachineAction(machineId))
 
     def _dispatch(self, action):
         self.store.dispatch(action)
