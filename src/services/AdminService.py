@@ -3,6 +3,7 @@ import time
 import numpy as np
 from firebase_admin import credentials
 from firebase_admin import db
+from helper import Logger
 
 '''
 structure:
@@ -12,9 +13,11 @@ structure:
                 datalog: dictionary = {'start_timestamp': , 'end_timestamp'}     
                     
 '''
-class Booking:
+class AdminService:
     __root = None
+    _logger = None
     def __init__(self):
+        self._logger = Logger.Logger()
         # Vectorizing all fucntions to perform action on multiple machines
         self.manage_Machine = np.vectorize(self.__manage_Machine)
         self.change_Availability = np.vectorize(self.__change_Availability)
@@ -22,14 +25,15 @@ class Booking:
         
         while type(self.__root) == type(None): #modify to use try catch instead
             try:
-                cred = credentials.Certificate("serviceAccountKey.json")
+                cred = credentials.Certificate("/Users/coconut/Project/sutd-digitalworld/src/services/serviceAccountKey.json")
                 firebase_admin.initialize_app(cred, {
                 'databaseURL': 'https://dw-bk-1d.firebaseio.com'
                 })
                 self.__root = db.reference().child("Machine")
-                print(type(self.__root))
+                self._logger.log("Firebase Credentials initialized")
+                # self._logger.log(type(self.__root))
             except:
-                print("serviceAccountKey.json is not setup properly")
+                self._logger.error("serviceAccountKey.json is not setup properly")
                 time.sleep(0.5)
                 
     # Splice a full ID into substrings: Location, Type and No_ID
@@ -93,7 +97,7 @@ class Booking:
             elif mac_ID in existing_Machine:
                 self.__root.child(mac_ID).delete()
                 #if mac_ID not in existing_Machine:
-                #    print("deleted: ", mac_ID) # for debugging only
+                #    self._logger("deleted: ", mac_ID) # for debugging only
                 
         elif edit == "add":
             if existing_Machine == None:
