@@ -1,5 +1,5 @@
 from core.Action import Action
-from helper import Logger, Database
+from helper import Logger, Database, Runner
 from datetime import datetime
 
 
@@ -7,6 +7,7 @@ class Reducer:
     def __init__(self):
         self._logger = Logger.Logger()
         self._database = Database.Database()
+        self._runner - Runner.Runner()
 
     def useMachine(self, state: dict, action: Action) -> dict:
         """ Called when user wants to use a machine
@@ -20,7 +21,7 @@ class Reducer:
         }
 
         self._database.create(action.payload["machineId"], patch)
-
+        self._database.occupyMachine(action.payload["machineId"])
         state.update({
             action.payload["machineId"]: patch
         })

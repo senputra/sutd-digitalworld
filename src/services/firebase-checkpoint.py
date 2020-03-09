@@ -6,7 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 #other type of timestamp is firestore.SERVER_TIMESTAMP
 
-cred = credentials.Certificate("serviceAccountKey.json")
+cred = credentials.Certificate("/Users/coconut/Project/sutd-digitalworld/src/services/serviceAccountKey.json")
 
 # # firebase_admin.initialize_app(cred, {
 #     'databaseURL': 'https://dw-bk-1d.firebaseio.com'
@@ -161,6 +161,9 @@ def update_datalog(blocknumber,machine_type,ID):
 
 
 def finished_cycle(timenow):
+    """
+    When the time now equals 
+    """
     docs = mach_ref.stream()
     for doc in docs:
         docid = doc.id

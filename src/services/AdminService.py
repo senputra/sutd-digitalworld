@@ -3,7 +3,7 @@ import time
 import numpy as np
 from firebase_admin import credentials
 from firebase_admin import db
-
+from helper import Logger
 '''
 structure:
         machine 
@@ -13,9 +13,11 @@ structure:
                     
 '''
 
-class Booking:
+class AdminService:
     __root = None
+    _logger = None
     def __init__(self):
+        self._logger = Logger.Logger()
         # Vectorizing all fucntions to perform action on multiple machines
         #self.change_Availability = np.vectorize(self.__change_Availability)
         self.add_machine = np.vectorize(self.__add_Machine, cache = True)
@@ -32,9 +34,9 @@ class Booking:
                 'databaseURL': 'https://dw-bk-1d.firebaseio.com'
                 })
                 self.__root = db.reference().child("Machine")
-                print(type(self.__root))
+                self._logger.log(type(self.__root))
             except:
-                print("serviceAccountKey.json is not setup properly")
+                self._logger.log("serviceAccountKey.json is not setup properly")
                 time.sleep(0.5)
                 
     # Splice a full ID into substrings: Location, Type and No_ID
@@ -99,7 +101,7 @@ class Booking:
         elif mac_ID in existing_Machine:
             self.__root.child(mac_ID).delete()
             #if mac_ID not in existing_Machine:
-            #    print("deleted: ", mac_ID) # for debugging only
+            #    self._logger.log("deleted: ", mac_ID) # for debugging only
                 
         
    
@@ -158,27 +160,27 @@ class Booking:
             for machine in existing_Machine:
                 if machine.find(Location) != -1 and machine.find(Type) != -1:  
                     latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
-                    print(latest_attempt)
+                    self._logger.log(latest_attempt)
                     self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
                     
         elif Location != "" and Type == "" and no_ID == "":
             for machine in existing_Machine:
                 if machine.find(Location) != -1 :
                     latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
-                    print(latest_attempt)
+                    self._logger.log(latest_attempt)
                     self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
                     
         elif Location == "" and Type != "" and no_ID == "":
             for machine in existing_Machine:
-                print(machine)
+                self._logger.log(machine)
                 if machine.find(Type) != -1:
                     latest_attempt = list(self.__root.child(machine).child("datalog").order_by_key().limit_to_last(1).get().keys())
-                    print(latest_attempt)
+                    self._logger.log(latest_attempt)
                     self.__root.child(machine).child("datalog").child(latest_attempt[0]).delete()
         
         elif mac_ID in existing_Machine:
             latest_attempt = list(self.__root.child(mac_ID).child("datalog").order_by_key().limit_to_last(1).get().keys())
-            print(latest_attempt)
+            self._logger.log(latest_attempt)
             self.__root.child(mac_ID).child("datalog").child(latest_attempt[0]).delete()
     
     # Occupy the machine, set availability = "True"
