@@ -36,17 +36,19 @@ mach_ref = ref.child('Machine')
 
 #UPDATE
 
-def update_availability_used(blocknumber,machine_type,ID): #blocknumber has to be in 'blk--'' format
-    machines = mach_ref.keys()
-    machines = list(machines)
-    for mac_ID in machines:
-        machine_details = mac_ID.split('_')
-        if blocknumber == machine_details[0]:
-            if machine_type.lower() == machine_details[1]:
-                if int(ID) == int(machine_details[2]):
-                    mach_ref.child(mac_ID).update({
-                        'Availability': 'False'
-                    })
+# def update_availability_used(blocknumber,machine_type,ID): #blocknumber has to be in 'blk--'' format
+#     machines = mach_ref.keys()
+#     machines = list(machines)
+#     for mac_ID in machines:
+#         machine_details = mac_ID.split('_')
+#         if blocknumber == machine_details[0]:
+#             if machine_type.lower() == machine_details[1]:
+#                 if ID == machine_details[2]:
+#                     mach_ref.child(mac_ID).update({
+#                         'Availability': 'False'
+#                     })
+
+
 
                     
             
@@ -71,7 +73,9 @@ def update_datalog(blocknumber,machine_type,ID):
                     mach_ref.child(mac_ID).child("datalog").child(time_str).set(data) #add a document with data to 'data_log' collection (random id allocation)
 
 update_datalog('Block55', 'Washer', '01')                    
-                    
+          
+    
+    
 # def finished_cycle(timenow):
 #     machines = machines.keys()
 #     machines = list(machines)
@@ -84,24 +88,38 @@ update_datalog('Block55', 'Washer', '01')
 #             })
     
     
+    
+    
 #RETRIEVE
     
 def get_available_mach(blocknumber, machine_type):
+    machines_availability = {'True': {}, 'False': {}, 'Spoiled': {}}
     avail_mach = []
+    unavail_mach = []
+    spoiled_mach = []
     machines = mach_ref.order_by_key().get()
     machines = list(machines) 
     for mac_ID in machines: 
         availability = mach_ref.child(mac_ID).order_by_child('availability').get().items()
         key, val = availability
-        if key[1] == True:
-            machine_details = mac_ID.split('_')
-            avail_mach.append(machine_details[2])
-                
-    if avail_mach == []:
-        return 'None'
-    else:
-        return avail_mach
+        machine_details = mac_ID.split('_')
+        if blocknumber == machine_details[0]:
+            if machine_type == machine_details[1]:
+                if key[1] == 'True':
+                    avail_mach.append(machine_details[2])
+                    
+                elif key[1] == 'Spoiled':
+                    spoiled_mach.append(machine_details[2])
+                    
+                elif key[1] == 'False':
+                    unavail_mach.append(machine_details[2])
+                    
+    machines_availability['True'] = avail_mach
+    machines_availability['False'] = unavail_mach
+    machines_availability['Spoiled'] = spoiled_mach
+   
+    return machines_availability
     
-get_available_mach('Block55', 'Washer')
-    
-    
+get_available_mach('Block57', 'Dryer')
+
+
