@@ -4,6 +4,6 @@
         "**/__pycache__": true
     },
     "python.linting.enabled": true,
-    "python.pythonPath": "/Users/coconut/opt/anaconda3/bin/python",
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\python.exe",
     "python.linting.pylintEnabled": true
 }
