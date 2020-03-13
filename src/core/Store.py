@@ -1,13 +1,14 @@
 from core.Action import Action
-from helper import Logger, Database, Runner
+from helper import Logger, Database
 from datetime import datetime
+from services import Runner
 
 
 class Reducer:
     def __init__(self):
         self._logger = Logger.Logger()
         self._database = Database.Database()
-        self._runner - Runner.Runner()
+        # self._runner = Runner.Runner()
 
     def useMachine(self, state: dict, action: Action) -> dict:
         """ Called when user wants to use a machine
@@ -15,7 +16,7 @@ class Reducer:
         2. Push a log to firebase
         """
         patch = {
-            "availability": False,
+            "availability": "False",
             # Get the time now
             "lastUsed":  (datetime.now() - datetime(1970, 1, 1)).total_seconds(),
         }
@@ -34,20 +35,20 @@ class Reducer:
         3. Remove any reminder assigned to any telegram user
         """
 
-    def addMachine(self, state:dict, action:Action) -> dict:
+    def addMachine(self, state: dict, action: Action) -> dict:
         """ [Admin] Add machine
         1. Add machine to firebase
         """
         self._database.addMachine(action.payload["machineId"])
         state.update({
-            action.payload["machineId"]:{
-                "availability" : True,
+            action.payload["machineId"]: {
+                "availability": True,
                 "lastUsed": 0,
             }
         })
         return state
 
-    def delMachine(self, state:dict, action:Action) -> dict:
+    def delMachine(self, state: dict, action: Action) -> dict:
         """ [Admin] Del machine
         1. Del machine from firebase
         """
@@ -79,36 +80,33 @@ class Store:
     def __init__(self):
         self._logger = Logger.Logger()
         self._reducer = Reducer()
+        self._notificationListener = []
 
         self.state = {}
         ''' state stores the state of the machine immutably
-        INITIAL STATE V1.0
-
-            iotID : "BLK_59_Laundry" or "BLK_55_PANTRY"
-            machines : {
-                "BLK_59_WASHING_MASHINE_1": {
-                    availability: True,
-                    lastUsed: 190123910239123 #time, seconds from 1 Jan 1970
-                }
-            }
-            machineIDs : [
-                "BLK_59_WASHING_MASHINE_1",
-                "BLK_59_WASHING_MASHINE_1",
-            ]
-
         '''
 
     def _convert(self, action: Action):
         state = self._reducer.reduce(self.state, action)
+        self.notify(state)
+
         self._logger.log("[STATE]")
         self._logger.log("{")
         [self._logger.log("    {}: {},".format(key, value))
          for key, value in self.state.items()]
         self._logger.log("}")
 
+    def notify(self, newState):
+        for listener in self._notificationListener:
+            listener.notify(newState)
+
+    def addlistener(self, callback):
+        self._notificationListener.append(callback)
+
     def dispatch(self, action: Action):
+        self._logger.log("[ACTION] {} | {}".format(
+            action.action, action.payload))
         self._convert(action)
-        self._logger.log("[ACTION] {}".format(action.action))
 
 
 if __name__ == "__main__":
