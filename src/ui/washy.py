@@ -9,6 +9,7 @@ from kivy.properties import ObjectProperty
 from kivy.uix.floatlayout import FloatLayout
 
 from helper import Logger
+from facade import Facade
 
 
 class MainWindow(Screen):
@@ -16,6 +17,9 @@ class MainWindow(Screen):
 
 
 class WasherWindow(Screen):
+
+    _facade = None
+
     washer7 = ObjectProperty(None)
     washer8 = ObjectProperty(None)
     washer9 = ObjectProperty(None)
@@ -30,46 +34,62 @@ class WasherWindow(Screen):
 
     _pressedButtonId = ""
 
+    def __init__(self, **kw):
+        # Logger.Logger().log(self._facade)
+        self._facade.registerStateListener(self.updateUI)
+        super().__init__(**kw)
+
     def button_release(self):
         """Register action only when there is a release action"""
-        self.updateUI({
-            "BLK55_WASHER_{}".format(self._pressedButtonId[3:]): "occupied"
-        })
-        _logger.log("Register button press on {}".format(
-            self._pressedButtonId))
+
+        if True:  # TODO: make some logic here to check if the machine is False beforehand
+            self._facade.useMachineWasher(self._pressedButtonId)
+            # self._logger.log("Register button press on {}".format(
+            #     self._pressedButtonId))
+        else:  # If False then get the popup
+            pass
 
     def button_down(self):
         for buttonId, button in self.ids.items():
             if button.state == 'down':
                 self._pressedButtonId = buttonId
-                _logger.log("Down on {}".format(buttonId))
+                self._logger.log("Down on {}".format(buttonId))
 
     def updateUI(self, newDict):
         """
             newDict = {
-                "BLK55_WASHER_01" : "free" | "occupied" | "broken",
-                "BLK55_WASHER_02" : "free" | "occupied" | "broken",
-                "BLK55_WASHER_03" : "free" | "occupied" | "broken",
+                "BLK55_WASHER_01" : "True" | "False" | "broken",
+                "BLK55_WASHER_02" : "True" | "False" | "broken",
+                "BLK55_WASHER_03" : "True" | "False" | "broken",
             }
 
+            a = {
+                 'Block57_WASHER_07': {'availability': 'False', 'lastUsed': 1584153003.587104},
+                 'Block57_WASHER_08': {'availability': 'False', 'lastUsed': 1584153007.432525},
+            }
         """
         for btnId, state in newDict.items():
             # change button text
+            if("WASHER" not in btnId):
+                continue
+
             self.ids["btn{}".format(int(btnId.split("_")[-1]))].text = {
-                "free": "",
-                "occupied": "OCCUPIED",
+                "True": "",
+                "False": "OCCUPIED",
                 "broken": "BROKEN",
-            }.get(state, "UNDEFINED STATE")
+            }.get(state['availability'], "UNDEFINED STATE")
             # change button color
             self.ids["btn{}".format(int(btnId.split("_")[-1]))].background_color = {
-                "free": [0, 0.7, 0.3, 1],
-                "occupied": [1, 0, 0, 1],
+                "True": [0, 0.7, 0.3, 1],
+                "False": [1, 0, 0, 1],
                 "broken": [1, 0.7, 0.3, 1],
-            }.get(state, [0, 0.7, 0.3, 1])
+            }.get(state['availability'], [0, 0.7, 0.3, 1])
         pass
 
 
 class DryerWindow(Screen):
+
+    _facade = None
 
     dryer1 = ObjectProperty(None)
     dryer2 = ObjectProperty(None)
@@ -80,42 +100,50 @@ class DryerWindow(Screen):
 
     _pressedButtonId = ""
 
+    def __init__(self, **kw):
+        # Logger.Logger().log("#2")
+        # Logger.Logger().log(self._facade)
+        self._facade.registerStateListener(self.updateUI)
+        super().__init__(**kw)
+
     def button_release(self):
         """Register action only when there is a release action"""
-        self.updateUI({
-            "BLK55_WASHER_{}".format(self._pressedButtonId[3:]): "occupied"
-        })
-        _logger.log("Register button press on {}".format(
-            self._pressedButtonId))
+        if True:  # TODO: make some logic here to check if the machine is False beforehand
+            self._facade.useMachineDryer(self._pressedButtonId)
+            # self._logger.log("Register button press on {}".format(
+            #     self._pressedButtonId))
+        else:  # If False then get the popup
+            pass
 
     def button_down(self):
         for buttonId, button in self.ids.items():
             if button.state == 'down':
                 self._pressedButtonId = buttonId
-                _logger.log("Down on {}".format(buttonId))
+                self._logger.log("Down on {}".format(buttonId))
 
     def updateUI(self, newDict):
         """
             newDict = {
-                "BLK55_WASHER_01" : "free" | "occupied" | "broken",
-                "BLK55_WASHER_02" : "free" | "occupied" | "broken",
-                "BLK55_WASHER_03" : "free" | "occupied" | "broken",
+                "BLK55_WASHER_01" : "True" | "False" | "broken",
+                "BLK55_DRYER_02" : "True" | "False" | "broken",
+                "BLK55_WASHER_03" : "True" | "False" | "broken",
             }
-
         """
         for btnId, state in newDict.items():
+            if("DRYER" not in btnId):
+                continue
             # change button text
             self.ids["btn{}".format(int(btnId.split("_")[-1]))].text = {
-                "free": "",
-                "occupied": "OCCUPIED",
+                "True": "",
+                "False": "OCCUPIED",
                 "broken": "BROKEN",
-            }.get(state, "UNDEFINED STATE")
+            }.get(state['availability'], "UNDEFINED STATE")
             # change button color
             self.ids["btn{}".format(int(btnId.split("_")[-1]))].background_color = {
-                "free": [0, 0.7, 0.3, 1],
-                "occupied": [1, 0, 0, 1],
+                "True": [0, 0.7, 0.3, 1],
+                "False": [1, 0, 0, 1],
                 "broken": [1, 0.7, 0.3, 1],
-            }.get(state, [0, 0.7, 0.3, 1])
+            }.get(state['availability'], [0, 0.7, 0.3, 1])
         pass
 
 
@@ -146,8 +174,23 @@ def show_faulty():
 
 
 class WashyApp(App):
+
+    _facade = None
+
+    @staticmethod
+    def setFacade(newFacade: Facade):
+        WashyApp._facade = newFacade
+
+    def updateNewDict(self, newDict):
+        pass
+
     def build(self):
-        return Builder.load_file("hello.kv")
+        Logger.Logger().log(self._facade)
+        DryerWindow._logger = Logger.Logger()
+        DryerWindow._facade = self._facade
+        WasherWindow._logger = Logger.Logger()
+        WasherWindow._facade = self._facade
+        return Builder.load_file("./ui/hello.kv")
 
 
 if __name__ == "__main__":
