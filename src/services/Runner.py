@@ -1,39 +1,38 @@
 from threading import Event, Thread
-from services import Logger
 
-from AdminService import *
 
 class Runner:
-    
+
     __new_thread = None
     __stopped = Event()
+
     def __init__(self, machineID):
         self.__machineID = machineID
-      
+
         #print("Thread initiated")
-        
 
-      
-    #set interval 
+    # set interval
 
-    #1. Takes in the function and the arguments that it has to run 
-    #2. After the timeInterval
+    # 1. Takes in the function and the arguments that it has to run
+    # 2. After the timeInterval
+
     def call_repeatedly(self, interval, func, *args):
         def loop():
-            while not self.__stopped.wait(interval): # the first call is in `interval` secs
-                
+            # the first call is in `interval` secs
+            while not self.__stopped.wait(interval):
+
                 func(*args)
                 break
             return self.__stopped.clear()
-            
+
         #print("An iteration")
-        self.__new_thread = Thread(target=loop)    
+        self.__new_thread = Thread(target=loop)
         self.__new_thread.start()
         return self.__stopped.set
-    
+
     def end_timer(self):
         return not self.__new_thread.is_alive()
-   
+
 
 '''
 # Sample debugging code
@@ -48,6 +47,3 @@ for i in mac:
     if a.end_timer():
         del a #should delete the object
 '''
-
-
-    
