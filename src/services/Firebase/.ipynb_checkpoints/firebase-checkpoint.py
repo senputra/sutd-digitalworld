@@ -14,8 +14,6 @@ cred = credentials.Certificate("serviceAccountKey.json")
 ##CLOUD
 db = firestore.client()
 
-machine_ref = db.collection('machine')
-#test if can be added to firestore -- cannott
 mach_ref = db.collection('machine')
 blk59_washer_1_ref = mach_ref.document('blk59_washer_1')
 
